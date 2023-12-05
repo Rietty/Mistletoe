@@ -17,6 +17,3 @@ Cargo.lock
 
 # Session files
 session.cookie
-
-# Ignore the AoCTiles folder.
-AoCTiles/
