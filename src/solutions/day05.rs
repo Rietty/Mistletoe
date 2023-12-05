@@ -21,6 +21,57 @@ fn process_maps(n: u64, maps: &[BTreeMap<u64, (u64, u64)>]) -> u64 {
     })
 }
 
+fn process_maps_ranges(seeds: &[u64], maps: &[BTreeMap<u64, (u64, u64)>]) -> Vec<(u64, u64)> {
+    let mut ranges = seeds.chunks(2).map(|v| (v[0], v[1])).collect::<Vec<_>>();
+
+    for map in maps {
+        let mut new_ranges = Vec::with_capacity(ranges.len());
+
+        for (start, len) in ranges {
+            let mut current_start = start;
+
+            let mut iter = map.range(..start + len).peekable();
+
+            while current_start < start + len {
+                match iter.peek() {
+                    Some((&src, &(dst, n))) if src <= current_start => {
+                        let map_end = src + n;
+
+                        // Unmapped section.
+                        if current_start < src {
+                            new_ranges.push((
+                                current_start,
+                                std::cmp::min(start + len, src) - current_start,
+                            ));
+                            current_start = src;
+                        }
+
+                        // Mapped section.
+                        if current_start < map_end {
+                            new_ranges.push((
+                                dst + current_start - src,
+                                std::cmp::min(start + len, map_end) - current_start,
+                            ));
+                            current_start = map_end;
+                        }
+
+                        iter.next();
+                    }
+                    _ => {
+                        // No more mappings applicable, add the rest of the range
+                        new_ranges.push((current_start, start + len - current_start));
+                        break;
+                    }
+                }
+            }
+        }
+
+        ranges = new_ranges;
+    }
+
+    ranges
+}
+
 pub fn solve(data: &(Vec<u64>, Vec<BTreeMap<u64, (u64, u64)>>)) -> (u64, u64) {
     // Process all the maps so we get the locations for each seed.
     let p1 = data
@@ -32,15 +83,11 @@ pub fn solve(data: &(Vec<u64>, Vec<BTreeMap<u64, (u64, u64)>>)) -> (u64, u64) {
 
     // For part 2, we need to operate on a seed of values. That is the data.0 vector is actually a set of ranges...
     // So we just do the thing for all the seeds, and then find the minimum value.
-    let p2 = (0..data.0.len())
-        .step_by(2)
-        .filter_map(|i| {
-            let start = data.0.get(i)?;
-            let end = start + data.0.get(i + 1)?;
-            (*start..=end).map(|s| process_maps(s, &data.1)).min()
-        })
+    let p2 = process_maps_ranges(&data.0, &data.1)
+        .iter()
+        .map(|&(s, _)| s)
         .min()
-        .unwrap_or(0);
+        .unwrap();
 
     (p1, p2)
 }
