@@ -118,6 +118,7 @@ pub fn solve(data: &[(String, i32)]) -> (i32, i32) {
             b.0.chars()
                 .map(|c| *card_strength.get(&c).unwrap())
                 .collect();
+
         let a_joker_count = a.0.chars().filter(|&c| c == 'J').count();
         let b_joker_count = b.0.chars().filter(|&c| c == 'J').count();
 
