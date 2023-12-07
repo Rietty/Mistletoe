@@ -1,17 +1,11 @@
 // https://adventofcode.com/2023/day/06
+use crate::library::concat_vec_to_num;
 
 pub fn ways_to_win(t: u64, d: u64) -> u64 {
-    // The amount of ways we can win, will be multipled into the p1 answer.
-    let mut wins: u64 = 0;
-    // Hold button down for 0 to t seconds, inclusive.
-    for b in 0..(t + 1) {
-        // Speed will equal to the value of the hold, i.e. the b. And the distance traveled will be t - b * b.
-        if ((t - b) * b) > d {
-            wins += 1;
-        }
-    }
-
-    wins
+    // This is actually an equation of a quadratic form: -x^2 + tx - d = 0
+    // Just need to solve for x and we have the number of ways to win. Since it's essentially bounding our two ends.
+    let m = ((t.pow(2) - 4 * d) as f64).sqrt();
+    ((t as f64 + m) / 2.0 - 1.0).ceil() as u64 - ((t as f64 - m) / 2.0 + 1.0).floor() as u64 + 1
 }
 
 pub fn solve(data: &(Vec<u64>, Vec<u64>)) -> (u64, u64) {
@@ -25,35 +19,27 @@ pub fn solve(data: &(Vec<u64>, Vec<u64>)) -> (u64, u64) {
 
     // For p2, instead of just going off a zip, we need to assume we have two indexes..
     let p2 = ways_to_win(
-        data.0
-            .iter()
-            .map(|&n| n.to_string())
-            .collect::<String>()
-            .parse()
-            .unwrap(),
-        data.1
-            .iter()
-            .map(|&n| n.to_string())
-            .collect::<String>()
-            .parse()
-            .unwrap(),
+        concat_vec_to_num(&data.0).unwrap(),
+        concat_vec_to_num(&data.1).unwrap(),
     );
 
     (p1, p2)
 }
 
 pub fn parse(data: &[String]) -> (Vec<u64>, Vec<u64>) {
-    let lines: Vec<_> = data.iter().map(|s| s.to_string()).collect();
-    let times: Vec<_> = lines[0]
-        .split_whitespace()
-        .skip(1)
-        .map(|s| s.parse::<u64>().unwrap())
-        .collect();
-    let distances: Vec<_> = lines[1]
-        .split_whitespace()
-        .skip(1)
-        .map(|s| s.parse::<u64>().unwrap())
-        .collect();
+    let times: Vec<u64> = data.get(0).map_or_else(Vec::new, |line| {
+        line.split_whitespace()
+            .skip(1)
+            .filter_map(|s| s.parse::<u64>().ok())
+            .collect()
+    });
+
+    let distances: Vec<u64> = data.get(1).map_or_else(Vec::new, |line| {
+        line.split_whitespace()
+            .skip(1)
+            .filter_map(|s| s.parse::<u64>().ok())
+            .collect()
+    });
 
     (times, distances)
 }
