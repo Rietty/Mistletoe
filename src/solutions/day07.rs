@@ -1,147 +1,126 @@
 // https://adventofcode.com/2023/day/07
-use std::collections::HashMap;
+use std::cmp::Ordering;
 
-#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
-enum HandType {
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum HandType {
     HighCard,
     OnePair,
-    TwoPair,
+    TwoPairs,
     ThreeOfAKind,
     FullHouse,
     FourOfAKind,
     FiveOfAKind,
 }
 
-// Need to figure out what type of hand we have..
-fn get_hand_type(hand: &[i32]) -> HandType {
-    let mut counts = HashMap::new();
-    for &card in hand {
-        *counts.entry(card).or_insert(0) += 1;
-    }
+#[derive(Debug, Clone)]
+pub struct Hand {
+    cards: String,
+    bid: i32,
+}
 
-    match counts.values().max() {
-        Some(&5) => HandType::FiveOfAKind,
-        Some(&4) => HandType::FourOfAKind,
-        Some(&3) if counts.len() == 2 => HandType::FullHouse,
-        Some(&3) => HandType::ThreeOfAKind,
-        Some(&2) if counts.len() == 3 => HandType::TwoPair,
-        Some(&2) => HandType::OnePair,
-        _ => HandType::HighCard,
+// Get the card value for a given card.
+fn card_value(card: char, p2: bool) -> i32 {
+    // Card value goes from 2 to 14, where 14 is an Ace, however if p2 is true then 'J' is a value of 0.
+    match card {
+        '2'..='9' => card.to_digit(10).unwrap() as i32,
+        'T' => 10,
+        'J' => {
+            if p2 {
+                1
+            } else {
+                11
+            }
+        }
+        'Q' => 12,
+        'K' => 13,
+        'A' => 14,
+        _ => 0,
     }
 }
 
-fn get_hand_type_jokers(hand: &[i32], joker_count: usize) -> HandType {
-    let mut counts = HashMap::new();
-    for &card in hand.iter().filter(|&&c| c != 0) {
-        *counts.entry(card).or_insert(0) += 1;
+pub fn rank(hand: &Hand, p2: bool) -> (HandType, Vec<i32>) {
+    // Create a vector to store the count of each card, and the rank of each card. It will be of length of hand.cards.
+    let mut count: Vec<i32> = vec![0; hand.cards.len()];
+    let mut rank: Vec<i32> = vec![0; hand.cards.len()];
+
+    // Loop through each card in the hand.
+    for (i, card) in hand.cards.chars().enumerate() {
+        // Set value of count to number of times the card appears in the hand.
+        count[i] = hand.cards.matches(card).count() as i32;
+        // Set value of rank to the value of the card.
+        rank[i] = card_value(card, p2);
     }
 
-    let max_count = counts.values().max().cloned().unwrap_or(0) + joker_count;
-
-    match max_count {
-        5 => HandType::FiveOfAKind,
-        4 => HandType::FourOfAKind,
-        3 => {
-            if counts.len() + joker_count == 2 || counts.len() == 1 {
-                HandType::FullHouse
-            } else {
-                HandType::ThreeOfAKind
+    // Based on if we are in p2 or not, we need to calculate the HandType
+    if p2 {
+        // Get number of 'J' cards in the hand.
+        let jokers = hand.cards.matches('J').count() as i32;
+        match count {
+            _ if count.contains(&(5 - jokers)) || jokers == 5 => (HandType::FiveOfAKind, rank),
+            _ if (count.contains(&(4 - jokers)) && jokers != 2)
+                || jokers == 3
+                || (jokers == 2 && count.iter().filter(|&n| *n == 2).count() == 4) =>
+            {
+                (HandType::FourOfAKind, rank)
             }
-        }
-        2 => {
-            if counts.len() + joker_count == 3 || counts.len() == 1 {
-                HandType::TwoPair
-            } else {
-                HandType::OnePair
+            _ if (count.contains(&3) && count.contains(&2))
+                || (jokers >= 1
+                    && jokers < 3
+                    && count.iter().filter(|&n| *n == 2).count() == 4) =>
+            {
+                (HandType::FullHouse, rank)
             }
+            _ if count.contains(&(3 - jokers)) || jokers == 2 => (HandType::ThreeOfAKind, rank),
+            _ if count.iter().filter(|&n| *n == 2).count() == 4
+                || (jokers == 1 && count.contains(&2)) =>
+            {
+                (HandType::TwoPairs, rank)
+            }
+            _ if count.contains(&2) || jokers == 1 => (HandType::OnePair, rank),
+            _ => (HandType::HighCard, rank),
         }
-        _ => HandType::HighCard,
+    } else {
+        match count {
+            _ if count.contains(&5) => (HandType::FiveOfAKind, rank),
+            _ if count.contains(&4) => (HandType::FourOfAKind, rank),
+            _ if count.contains(&3) && count.contains(&2) => (HandType::FullHouse, rank),
+            _ if count.contains(&3) => (HandType::ThreeOfAKind, rank),
+            _ if count.iter().filter(|&n| *n == 2).count() == 4 => (HandType::TwoPairs, rank),
+            _ if count.contains(&2) => (HandType::OnePair, rank),
+            _ => (HandType::HighCard, rank),
+        }
     }
 }
 
-pub fn solve(data: &[(String, i32)]) -> (i32, i32) {
-    let mut card_strength = HashMap::from([
-        ('A', 14),
-        ('K', 13),
-        ('Q', 12),
-        ('J', 11),
-        ('T', 10),
-        ('9', 9),
-        ('8', 8),
-        ('7', 7),
-        ('6', 6),
-        ('5', 5),
-        ('4', 4),
-        ('3', 3),
-        ('2', 2),
-    ]);
+fn compute_sum(data: &[Hand], p2: bool) -> i32 {
+    let mut hand_ranks: Vec<(HandType, Vec<i32>, i32)> = data
+        .iter()
+        .map(|hand| {
+            let (hand_type, rank) = rank(hand, p2);
+            (hand_type, rank, hand.bid)
+        })
+        .collect();
 
-    let mut hands = data.to_vec();
-    hands.sort_by(|a, b| {
-        let a_hand: Vec<i32> =
-            a.0.chars()
-                .map(|c| *card_strength.get(&c).unwrap())
-                .collect();
-        let b_hand: Vec<i32> =
-            b.0.chars()
-                .map(|c| *card_strength.get(&c).unwrap())
-                .collect();
-
-        let a_type = get_hand_type(&a_hand);
-        let b_type = get_hand_type(&b_hand);
-
-        match a_type.cmp(&b_type) {
-            std::cmp::Ordering::Equal => a_hand.cmp(&b_hand),
-            other => other,
-        }
+    hand_ranks.sort_by(|a, b| match a.0.cmp(&b.0) {
+        Ordering::Equal => a.1.cmp(&b.1),
+        other => other,
     });
 
-    // Part 1 get the sum of the product of each bid and the index + 1 of the hand.
-    let p1 = hands
+    hand_ranks
         .iter()
         .enumerate()
-        .map(|(i, (_, bid))| (i + 1) as i32 * bid)
-        .sum::<i32>();
+        .map(|(i, (_, _, bid))| bid * (i as i32 + 1))
+        .sum()
+}
 
-    // Part 2
-    // Need to set value of 'J' to 0 to represent a joker
-    card_strength.insert('J', 0);
-
-    // Do stuff here.
-    let mut hands = data.to_vec();
-    hands.sort_by(|a, b| {
-        let a_hand: Vec<i32> =
-            a.0.chars()
-                .map(|c| *card_strength.get(&c).unwrap())
-                .collect();
-        let b_hand: Vec<i32> =
-            b.0.chars()
-                .map(|c| *card_strength.get(&c).unwrap())
-                .collect();
-
-        let a_joker_count = a.0.chars().filter(|&c| c == 'J').count();
-        let b_joker_count = b.0.chars().filter(|&c| c == 'J').count();
-
-        let a_type = get_hand_type_jokers(&a_hand, a_joker_count);
-        let b_type = get_hand_type_jokers(&b_hand, b_joker_count);
-
-        match a_type.cmp(&b_type) {
-            std::cmp::Ordering::Equal => a_hand.cmp(&b_hand),
-            other => other,
-        }
-    });
-
-    // Part 2 get the sum of the product of each bid and the index + 1 of the hand.
-    let p2 = hands
-        .iter()
-        .enumerate()
-        .map(|(i, (_, bid))| (i + 1) as i32 * bid)
-        .sum::<i32>();
+pub fn solve(data: &[Hand]) -> (i32, i32) {
+    let p1 = compute_sum(data, false);
+    let p2 = compute_sum(data, true);
 
     (p1, p2)
 }
 
-pub fn parse(data: &[String]) -> Vec<(String, i32)> {
+pub fn parse(data: &[String]) -> Vec<Hand> {
     let mut hands = Vec::new();
 
     for line in data {
@@ -150,7 +129,11 @@ pub fn parse(data: &[String]) -> Vec<(String, i32)> {
         if parts.len() == 2 {
             if let Ok(value) = parts[1].parse::<i32>() {
                 // Insert the key and value into the map
-                hands.push((parts[0].to_string(), value));
+                // hands.push((parts[0].to_string(), value));
+                hands.push(Hand {
+                    cards: parts[0].to_string(),
+                    bid: value,
+                });
             }
         }
     }
