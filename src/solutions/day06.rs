@@ -1,5 +1,5 @@
 // https://adventofcode.com/2023/day/06
-use crate::library::concat_vec_to_num;
+use crate::library::concat_slice_to_num;
 
 pub fn ways_to_win(t: u64, d: u64) -> u64 {
     // This is actually an equation of a quadratic form: -x^2 + tx - d = 0
@@ -19,8 +19,8 @@ pub fn solve(data: &(Vec<u64>, Vec<u64>)) -> (u64, u64) {
 
     // For p2, instead of just going off a zip, we need to assume we have two indexes..
     let p2 = ways_to_win(
-        concat_vec_to_num(&data.0).unwrap(),
-        concat_vec_to_num(&data.1).unwrap(),
+        concat_slice_to_num(&data.0),
+        concat_slice_to_num(&data.1),
     );
 
     (p1, p2)

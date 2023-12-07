@@ -2,6 +2,7 @@
 
 // Imports
 #[allow(unused_imports)]
+use num_traits::{one, zero, FromPrimitive, Unsigned};
 use std::{
     fs::File,
     io::{self, BufRead},
@@ -28,19 +29,25 @@ where
     Ok(io::BufReader::new(file).lines())
 }
 
-
 // Function to go from a generic vector of numbers to a long integer maximum value of that type else throw an error.
 // So for example if you pass it a [4, 21, 4, 2] it gives back a 42142 as the value. Do so without any string conversions.
 #[allow(unused)]
-pub fn concat_vec_to_num<T>(vec: &[T]) -> Result<T, &'static str> 
-where
-    T: ToString + std::str::FromStr + Copy, // Ensuring T is Copy
-    <T as std::str::FromStr>::Err: std::fmt::Debug,
-{
-    let mut result_str = String::new();
-    for &number in vec { // Dereferencing number
-        result_str.push_str(&number.to_string());
+pub fn concat_slice_to_num<T: Unsigned + FromPrimitive + PartialOrd + Clone>(nums: &[T]) -> T {
+    let mut together = zero();
+    let mut power: T = one();
+
+    for num in nums.iter().rev() {
+        together = together + num.clone() * power.clone();
+        power = power.clone() * calculate_next_power_ten(num);
     }
 
-    result_str.parse::<T>().map_err(|_| "Failed to parse the concatenated string into a number")
+    together
+}
+
+fn calculate_next_power_ten<T: Unsigned + FromPrimitive + PartialOrd>(num: &T) -> T {
+    let mut power = T::from_u8(10).unwrap();
+    while &power <= num {
+        power = power * T::from_u8(10).unwrap();
+    }
+    power
 }
