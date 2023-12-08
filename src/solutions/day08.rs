@@ -1,5 +1,6 @@
 // https://adventofcode.com/2023/day/08
 use std::collections::HashMap;
+use rayon::prelude::*;
 
 pub fn get_path_size(
     instructions: &[char],
@@ -31,6 +32,8 @@ pub fn solve(data: &(Vec<char>, HashMap<String, (String, String)>)) -> (u64, u64
         .1
         .keys()
         .filter(|k| k.ends_with('A'))
+        .collect::<Vec<_>>()
+        .par_iter()
         .map(|k| get_path_size(&data.0, &data.1, k, "Z"))
         .collect();
 
