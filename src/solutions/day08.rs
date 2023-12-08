@@ -1,7 +1,12 @@
 // https://adventofcode.com/2023/day/08
 use std::collections::HashMap;
 
-pub fn get_path_size(instructions: &[char], map: &HashMap<String, (String, String)>, start: &str, end: &str) -> u64 {
+pub fn get_path_size(
+    instructions: &[char],
+    map: &HashMap<String, (String, String)>,
+    start: &str,
+    end: &str,
+) -> u64 {
     let mut curr_node = start;
     let mut i = 0;
     let mut path_size = 0;
@@ -22,12 +27,16 @@ pub fn get_path_size(instructions: &[char], map: &HashMap<String, (String, Strin
 pub fn solve(data: &(Vec<char>, HashMap<String, (String, String)>)) -> (u64, u64) {
     let p1 = get_path_size(&data.0, &data.1, "AAA", "ZZZ");
 
-    let path_sizes: Vec<_> = data.1.keys()
+    let path_sizes: Vec<_> = data
+        .1
+        .keys()
         .filter(|k| k.ends_with('A'))
         .map(|k| get_path_size(&data.0, &data.1, k, "Z"))
         .collect();
 
-    let p2 = path_sizes.iter().fold(1, |acc, &num| num::integer::lcm(acc, num));
+    let p2 = path_sizes
+        .iter()
+        .fold(1, |acc, &num| num::integer::lcm(acc, num));
 
     (p1, p2)
 }
@@ -38,16 +47,16 @@ pub fn parse(data: &[String]) -> (Vec<char>, HashMap<String, (String, String)>) 
     let mut map = HashMap::new();
 
     for line in &data[2..] {
-        let parts = line.split(" = ").collect::<Vec<&str>>();
-        if parts.len() == 2 {
-            let key = parts[0].to_string();
-            let value_part = parts[1];
-
-            // Remove the parentheses and split by comma
-            let values = value_part[1..value_part.len() - 1].split(", ").collect::<Vec<&str>>();
-
+        if let Some((key, value_part)) = line.split_once(" = ") {
+            let values = value_part
+                .trim_matches(|p| p == '(' || p == ')')
+                .split(", ")
+                .collect::<Vec<&str>>();
             if values.len() == 2 {
-                map.insert(key, (values[0].to_string(), values[1].to_string()));
+                map.insert(
+                    key.to_string(),
+                    (values[0].to_string(), values[1].to_string()),
+                );
             }
         }
     }
