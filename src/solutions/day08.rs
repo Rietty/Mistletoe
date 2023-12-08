@@ -1,12 +1,12 @@
 // https://adventofcode.com/2023/day/08
 use std::collections::HashMap;
 
-pub fn get_path_size(instructions: &[char], map: &HashMap<String, (String, String)>, start: &str) -> u64 {
+pub fn get_path_size(instructions: &[char], map: &HashMap<String, (String, String)>, start: &str, end: &str) -> u64 {
     let mut curr_node = start;
     let mut i = 0;
     let mut path_size = 0;
 
-    while !curr_node.ends_with('Z') {
+    while !curr_node.ends_with(end) {
         let curr_char = instructions[i];
         let (left, right) = &map[curr_node];
 
@@ -20,23 +20,11 @@ pub fn get_path_size(instructions: &[char], map: &HashMap<String, (String, Strin
 }
 
 pub fn solve(data: &(Vec<char>, HashMap<String, (String, String)>)) -> (u64, u64) {
-    let mut curr_node = "AAA";
-    let mut p1 = 0;
-    let mut i = 0;
-
-    while curr_node != "ZZZ" {
-        let curr_char = data.0[i];
-        let (left, right) = &data.1[curr_node];
-
-        curr_node = if curr_char == 'L' { left } else { right };
-        p1 += 1;
-
-        i = (i + 1) % data.0.len();
-    }
+    let p1 = get_path_size(&data.0, &data.1, "AAA", "ZZZ");
 
     let path_sizes: Vec<_> = data.1.keys()
         .filter(|k| k.ends_with('A'))
-        .map(|k| get_path_size(&data.0, &data.1, k))
+        .map(|k| get_path_size(&data.0, &data.1, k, "Z"))
         .collect();
 
     let p2 = path_sizes.iter().fold(1, |acc, &num| num::integer::lcm(acc, num));
