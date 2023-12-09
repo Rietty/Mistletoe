@@ -1,11 +1,53 @@
 // https://adventofcode.com/2023/day/09
 
-pub fn solve(_data: &[String]) -> (i32, i32) {
-    (0, 0)
+// Generate differences between elements of a vector
+pub fn differences(vec: &[i32]) -> Vec<i32> {
+    vec.windows(2).map(|w| w[1] - w[0]).collect()
 }
 
-pub fn parse(data: &[String]) -> Vec<String> {
-    data.iter().map(|s| s.to_string()).collect()
+pub fn extrapolate(data: Vec<i32>) -> i32 {
+    // Generate the chain of difference vectors
+    let mut chain = vec![data];
+    while chain
+        .last()
+        .unwrap()
+        .iter()
+        .all(|&x| x == chain.last().unwrap()[0])
+        == false
+    {
+        chain.push(differences(chain.last().unwrap()));
+    }
+
+    // Backtrack and extrapolate the chain
+    for i in (0..chain.len() - 1).rev() {
+        let last_element = chain[i].last().unwrap() + chain[i + 1].last().unwrap();
+        chain[i].push(last_element);
+    }
+
+    // Last element of first vector is the extrapolated value
+    *chain.first().unwrap().last().unwrap()
+}
+
+pub fn solve(data: &Vec<Vec<i32>>) -> (i32, i32) {
+    // Sum of all vectors called with extrapolate
+    let p1 = data.iter().map(|v| extrapolate(v.to_vec())).sum();
+    let p2 = data
+        .iter()
+        .map(|v| extrapolate(v.to_vec().into_iter().rev().collect()))
+        .sum();
+
+    (p1, p2)
+}
+
+pub fn parse(data: &[String]) -> Vec<Vec<i32>> {
+    // Read data into a vector of vectors of i32
+    data.iter()
+        .map(|line| {
+            line.split_whitespace()
+                .map(|num| num.parse::<i32>().unwrap())
+                .collect::<Vec<i32>>()
+        })
+        .collect::<Vec<Vec<i32>>>()
 }
 
 #[allow(dead_code)]
@@ -33,7 +75,7 @@ mod tests {
 
     #[test]
     fn part1() {
-        let expected = 0;
+        let expected = 114;
         let res = solve(&parse(&crate::library::read_file("testdata/day09.txt")));
         assert_eq!(res.0, expected);
         println!("Part 1: Expected: {}, Actual: {}", expected, res.0);
@@ -41,7 +83,7 @@ mod tests {
 
     #[test]
     fn part2() {
-        let expected = 0;
+        let expected = 2;
         let res = solve(&parse(&crate::library::read_file("testdata/day09.txt")));
         assert_eq!(res.1, expected);
         println!("Part 2: Expected: {}, Actual: {}", expected, res.1);
