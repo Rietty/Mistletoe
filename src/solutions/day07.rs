@@ -1,5 +1,6 @@
 // https://adventofcode.com/2023/day/07
 use std::cmp::Ordering;
+use rayon::prelude::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum HandType {
@@ -94,7 +95,7 @@ pub fn rank(hand: &Hand, p2: bool) -> (HandType, Vec<i32>) {
 
 fn compute_sum(data: &[Hand], p2: bool) -> i32 {
     let mut hand_ranks: Vec<(HandType, Vec<i32>, i32)> = data
-        .iter()
+        .par_iter()
         .map(|hand| {
             let (hand_type, rank) = rank(hand, p2);
             (hand_type, rank, hand.bid)
@@ -107,7 +108,7 @@ fn compute_sum(data: &[Hand], p2: bool) -> i32 {
     });
 
     hand_ranks
-        .iter()
+        .par_iter()
         .enumerate()
         .map(|(i, (_, _, bid))| bid * (i as i32 + 1))
         .sum()

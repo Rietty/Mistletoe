@@ -1,5 +1,6 @@
 // https://adventofcode.com/2023/day/05
 use std::collections::BTreeMap;
+use rayon::prelude::*;
 
 fn process_maps(n: u64, maps: &[BTreeMap<u64, (u64, u64)>]) -> u64 {
     // Go through the maps array, one by one, so it processes seed-to-soil, then soil-to-fertilizer etc..
@@ -76,7 +77,7 @@ pub fn solve(data: &(Vec<u64>, Vec<BTreeMap<u64, (u64, u64)>>)) -> (u64, u64) {
     // Process all the maps so we get the locations for each seed.
     let p1 = data
         .0
-        .iter()
+        .par_iter()
         .map(|&s| process_maps(s, &data.1))
         .min()
         .unwrap();
@@ -84,7 +85,7 @@ pub fn solve(data: &(Vec<u64>, Vec<BTreeMap<u64, (u64, u64)>>)) -> (u64, u64) {
     // For part 2, we need to operate on a seed of values. That is the data.0 vector is actually a set of ranges...
     // So we just do the thing for all the seeds, and then find the minimum value.
     let p2 = process_maps_ranges(&data.0, &data.1)
-        .iter()
+        .par_iter()
         .map(|&(s, _)| s)
         .min()
         .unwrap();

@@ -1,4 +1,5 @@
 // https://adventofcode.com/2023/day/09
+use rayon::prelude::*;
 
 // Generate differences between elements of a vector
 pub fn differences(vec: &[i32]) -> Vec<i32> {
@@ -11,7 +12,7 @@ pub fn extrapolate(data: Vec<i32>) -> i32 {
     while chain
         .last()
         .unwrap()
-        .iter()
+        .par_iter()
         .all(|&x| x == chain.last().unwrap()[0])
         == false
     {
@@ -30,9 +31,9 @@ pub fn extrapolate(data: Vec<i32>) -> i32 {
 
 pub fn solve(data: &Vec<Vec<i32>>) -> (i32, i32) {
     // Sum of all vectors called with extrapolate
-    let p1 = data.iter().map(|v| extrapolate(v.to_vec())).sum();
+    let p1 = data.par_iter().map(|v| extrapolate(v.to_vec())).sum();
     let p2 = data
-        .iter()
+        .par_iter()
         .map(|v| extrapolate(v.to_vec().into_iter().rev().collect()))
         .sum();
 
@@ -41,7 +42,7 @@ pub fn solve(data: &Vec<Vec<i32>>) -> (i32, i32) {
 
 pub fn parse(data: &[String]) -> Vec<Vec<i32>> {
     // Read data into a vector of vectors of i32
-    data.iter()
+    data.par_iter()
         .map(|line| {
             line.split_whitespace()
                 .map(|num| num.parse::<i32>().unwrap())
