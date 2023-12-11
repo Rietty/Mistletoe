@@ -1,6 +1,7 @@
 // https://adventofcode.com/2023/day/11
-use itertools::Itertools;
+use std::collections::HashSet;
 use rayon::prelude::*;
+use itertools::Itertools;
 
 const P1_SCALE: i64 = 2;
 const P2_SCALE: i64 = 1_000_000;
@@ -28,27 +29,28 @@ pub fn distance(p1: Coordinates, p2: Coordinates) -> i64 {
 // We need to be able to calculate the real coordinates based off the scaling of rows and columns without any galaxies in them.
 pub fn get_real_coords(vec: &Vec<Coordinates>, p: &Coordinates, scale: i64) -> Coordinates {
     // Calculate the offset, that is the amount of numbers by which to shift our coordinate due to any empty row or columns.
-    let x_offset = (1..=p.x).filter(|&i| !vec.iter().map(|key| key.x).collect::<Vec<_>>().contains(&i)).count() as i64;
-    let y_offset = (1..=p.y).filter(|&i| !vec.iter().map(|key| key.y).collect::<Vec<_>>().contains(&i)).count() as i64;
+    let x_set: HashSet<_> = vec.iter().map(|key| key.x).collect();
+    let y_set: HashSet<_> = vec.iter().map(|key| key.y).collect();
+ 
+    let x_offset = (1..=p.x).filter(|&i| !x_set.contains(&i)).count() as i64;
+    let y_offset = (1..=p.y).filter(|&i| !y_set.contains(&i)).count() as i64;
 
     // We return the new coordinate, but we have to multiply the offset by scale, and then subtract the offset for the original row or column from the scaled up version.
     Coordinates::new(p.x + (x_offset * scale) - x_offset, p.y + (y_offset * scale) - y_offset)
 }
 
 pub fn solve(data: &Vec<Coordinates>) -> (i64, i64) {
-    let p1: i64 = data.iter().combinations(2).par_bridge().map(|c| {
-            let (p1, p2) = (c.clone().into_iter().nth(0).unwrap(), c.clone().into_iter().nth(1).unwrap());
-            let r_p1 = get_real_coords(data, p1, P1_SCALE);
-            let r_p2 = get_real_coords(data, p2, P1_SCALE);
-            distance(r_p1, r_p2)
+    // Calculate scaled coordinates before hand for everything.
+    let p1_data: Vec<Coordinates> = data.clone().into_iter().map(|c| get_real_coords(data, &c, P1_SCALE)).collect();
+    let p2_data: Vec<Coordinates> = data.clone().into_iter().map(|c| get_real_coords(data, &c, P2_SCALE)).collect();
+
+    let p1: i64 = p1_data.iter().combinations(2).par_bridge().map(|c| {
+            distance(*c[0], *c[1])
         }
     ).sum();
 
-    let p2: i64 = data.iter().combinations(2).par_bridge().map(|c| {
-            let (p1, p2) = (c.clone().into_iter().nth(0).unwrap(), c.clone().into_iter().nth(1).unwrap());
-            let r_p1 = get_real_coords(data, p1, P2_SCALE);
-            let r_p2 = get_real_coords(data, p2, P2_SCALE);
-            distance(r_p1, r_p2)
+    let p2: i64 = p2_data.iter().combinations(2).par_bridge().map(|c| {
+            distance(*c[0], *c[1])
         }
     ).sum();
 
