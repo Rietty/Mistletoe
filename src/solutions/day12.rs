@@ -25,34 +25,38 @@ pub fn permute(
     }
 
     let mut result;
-    
+
     if si == 0 && ci == 0 {
         result = 1;
     } else if si == 0 {
         result = 0;
     } else if ci == 0 {
         result = springs.chars[..si].chars().all(|c| c != '#') as usize;
+    } else if springs.chars.chars().nth(si - 1).unwrap() == '.' {
+        result = permute(cache, springs, si - 1, ci);
     } else {
-        let char_at_si = springs.chars.chars().nth(si - 1).unwrap();
-        let count_at_ci = springs.counts[ci - 1];
+        let curr_num = springs.counts[ci - 1];
 
-        if char_at_si == '.' {
-            result = permute(cache, springs, si - 1, ci);
+        if curr_num > si || springs.chars[si - curr_num..si].chars().any(|c| c == '.') {
+            result = 0;
+        } else if si > curr_num && springs.chars.chars().nth(si - curr_num - 1).unwrap() == '#' {
+            result = 0;
         } else {
-            if count_at_ci > si || springs.chars[si - count_at_ci..si].contains('.') {
-                result = 0;
-            } else if si > count_at_ci && springs.chars.chars().nth(si - count_at_ci - 1).unwrap() == '#' {
-                result = 0;
+            let new_si = if si >= curr_num + 1 {
+                si - curr_num - 1
             } else {
-                result = permute(cache, springs, si.saturating_sub(count_at_ci + 1), ci - 1);
-                if char_at_si == '?' {
-                    result += permute(cache, springs, si - 1, ci);
-                }
-            }
+                0
+            };
+            result = permute(cache, springs, new_si, ci - 1);
+        }
+
+        if springs.chars.chars().nth(si - 1).unwrap() == '?' {
+            result += permute(cache, springs, si - 1, ci);
         }
     }
 
     cache.insert((si, ci), result);
+
     result
 }
 
@@ -61,9 +65,18 @@ pub fn solve(data: &Vec<Springs>) -> (u64, u64) {
     let mut cache: HashMap<(usize, usize), usize> = HashMap::new();
 
     // Part 1: Count the number of permutations for base input.
-    let p1 = data.iter().map(|s| permute(&mut cache, s, s.chars.len(), s.counts.len())).sum::<usize>() as u64;
+    let mut _p1 = 0;
+    for springs in data {
+        let v = permute(
+            &mut cache,
+            springs,
+            springs.chars.len(),
+            springs.counts.len(),
+        );
+        println!("{:?} - {:?}", springs, v);
+    }
 
-    (p1, 0)
+    (_p1 as u64, 0)
 }
 
 pub fn parse(data: &[String]) -> Vec<Springs> {
