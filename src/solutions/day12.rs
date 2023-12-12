@@ -1,5 +1,6 @@
 // https://adventofcode.com/2023/day/12
 use lru::LruCache;
+use rayon::prelude::*;
 use std::num::NonZeroUsize;
 
 #[derive(Debug)]
@@ -14,7 +15,22 @@ impl Springs {
     }
 }
 
-pub fn permute(springs: &Springs, si: usize, ci: usize, cache: &mut LruCache<(usize, usize), usize>) -> usize {
+pub fn calculate_permutations(springs: &Springs) -> usize {
+    let mut cache = LruCache::new(NonZeroUsize::new(100).unwrap());
+    permute(
+        springs,
+        springs.chars.len(),
+        springs.counts.len(),
+        &mut cache,
+    )
+}
+
+pub fn permute(
+    springs: &Springs,
+    si: usize,
+    ci: usize,
+    cache: &mut LruCache<(usize, usize), usize>,
+) -> usize {
     if let Some(&cached_result) = cache.get(&(si, ci)) {
         return cached_result;
     }
@@ -57,13 +73,10 @@ pub fn permute(springs: &Springs, si: usize, ci: usize, cache: &mut LruCache<(us
 }
 
 pub fn solve(data: &Vec<Springs>) -> (u64, u64) {
-    // Cache the results of the permutations.
-    let mut cache: LruCache<(usize, usize), usize> = LruCache::new(NonZeroUsize::new(1024).unwrap());
-
     // Part 1: Count the number of permutations for base input.
     let p1 = data
-        .iter()
-        .map(|s| permute(s, s.chars.len(), s.counts.len(), &mut cache))
+        .par_iter()
+        .map(|s| calculate_permutations(s))
         .sum::<usize>();
 
     // Part 2: We need to make each input 5x the size, both the string and the counts.
@@ -90,8 +103,8 @@ pub fn solve(data: &Vec<Springs>) -> (u64, u64) {
 
     // Count the number of permutations for the new data.
     let p2 = data
-        .iter()
-        .map(|s| permute(s, s.chars.len(), s.counts.len(), &mut cache))
+        .par_iter()
+        .map(|s| calculate_permutations(s))
         .sum::<usize>();
 
     (p1 as u64, p2 as u64)
