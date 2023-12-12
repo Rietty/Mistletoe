@@ -1,5 +1,6 @@
 // https://adventofcode.com/2023/day/12
-use std::collections::HashMap;
+use lru::LruCache;
+use std::num::NonZeroUsize;
 
 #[derive(Debug)]
 pub struct Springs {
@@ -13,15 +14,9 @@ impl Springs {
     }
 }
 
-pub fn permute(
-    cache: &mut HashMap<(usize, usize), usize>,
-    springs: &Springs,
-    si: usize,
-    ci: usize,
-) -> usize {
-    // Check if the result has already been calculated.
-    if let Some(&result) = cache.get(&(si, ci)) {
-        return result;
+pub fn permute(springs: &Springs, si: usize, ci: usize, cache: &mut LruCache<(usize, usize), usize>) -> usize {
+    if let Some(&cached_result) = cache.get(&(si, ci)) {
+        return cached_result;
     }
 
     let mut result;
@@ -33,7 +28,7 @@ pub fn permute(
     } else if ci == 0 {
         result = springs.chars[..si].chars().all(|c| c != '#') as usize;
     } else if springs.chars.chars().nth(si - 1).unwrap() == '.' {
-        result = permute(cache, springs, si - 1, ci);
+        result = permute(springs, si - 1, ci, cache);
     } else {
         let curr_num = springs.counts[ci - 1];
 
@@ -42,41 +37,64 @@ pub fn permute(
         } else if si > curr_num && springs.chars.chars().nth(si - curr_num - 1).unwrap() == '#' {
             result = 0;
         } else {
-            let new_si = if si >= curr_num + 1 {
+            let new_si = if si - 1 >= curr_num {
                 si - curr_num - 1
             } else {
                 0
             };
-            result = permute(cache, springs, new_si, ci - 1);
+
+            result = permute(springs, new_si, ci - 1, cache);
         }
 
         if springs.chars.chars().nth(si - 1).unwrap() == '?' {
-            result += permute(cache, springs, si - 1, ci);
+            result += permute(springs, si - 1, ci, cache);
         }
     }
 
-    cache.insert((si, ci), result);
+    cache.put((si, ci), result);
 
     result
 }
 
 pub fn solve(data: &Vec<Springs>) -> (u64, u64) {
-    // Cache the results of the permutations to avoid recalculating them.
-    let mut cache: HashMap<(usize, usize), usize> = HashMap::new();
+    // Cache the results of the permutations.
+    let mut cache: LruCache<(usize, usize), usize> = LruCache::new(NonZeroUsize::new(1024).unwrap());
 
     // Part 1: Count the number of permutations for base input.
-    let mut _p1 = 0;
-    for springs in data {
-        let v = permute(
-            &mut cache,
-            springs,
-            springs.chars.len(),
-            springs.counts.len(),
-        );
-        println!("{:?} - {:?}", springs, v);
-    }
+    let p1 = data
+        .iter()
+        .map(|s| permute(s, s.chars.len(), s.counts.len(), &mut cache))
+        .sum::<usize>();
 
-    (_p1 as u64, 0)
+    // Part 2: We need to make each input 5x the size, both the string and the counts.
+    // Iterate over the data and resize/repeat the strings and counts by 5 for both.
+    let data = data
+        .iter()
+        .map(|s| {
+            let new_s = std::iter::repeat(s.chars.chars().collect::<String>())
+                .take(5)
+                .collect::<Vec<_>>()
+                .join("?");
+
+            let new_c = s
+                .counts
+                .iter()
+                .cycle()
+                .take(s.counts.len() * 5)
+                .cloned()
+                .collect::<Vec<_>>();
+
+            Springs::new(new_s, new_c)
+        })
+        .collect::<Vec<Springs>>();
+
+    // Count the number of permutations for the new data.
+    let p2 = data
+        .iter()
+        .map(|s| permute(s, s.chars.len(), s.counts.len(), &mut cache))
+        .sum::<usize>();
+
+    (p1 as u64, p2 as u64)
 }
 
 pub fn parse(data: &[String]) -> Vec<Springs> {
@@ -133,7 +151,7 @@ mod tests {
 
     #[test]
     fn part2() {
-        let expected = 0;
+        let expected = 525152;
         let res = solve(&parse(&crate::library::read_file("testdata/day12.txt")));
         assert_eq!(res.1, expected);
         println!("Part 2: Expected: {}, Actual: {}", expected, res.1);
