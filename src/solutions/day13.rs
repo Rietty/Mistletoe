@@ -20,7 +20,8 @@ impl Grid {
         
         // Essentially the way this will work is that we go through the lines, either of the rows or the columns.
         // By zipping up the lines in reverse iterator order, that is lines are zipped together from outside to inside.
-        // A B C D E F is zipped in: AF, BE, CD etc... 
+        // Even amount: A B C D E F is zipped in: AF, BE, CD etc...
+        // Odd amount: A B C D E F G is zipped in: BG CF DE and A is ignored (as per examples..)
         // We can then see if lines match, and if not exactly how much they differ by.
         // If the lines don't differ at all we can use that to get our index needed to calculate the score.
         // If the lines differ at exactly one character, then for part two we have found the character we need to flip and thus the new line of reflection.
