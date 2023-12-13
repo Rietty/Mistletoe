@@ -17,7 +17,7 @@ impl Grid {
     fn calculate_reflection_score(&self, target: usize) -> usize {
         // Generate both the columns and rows as a Vec<String> so we can calculate the score for each type as needed.
         let (rows, cols) = (self.rows(), self.columns());
-        
+
         // Essentially the way this will work is that we go through the lines, either of the rows or the columns.
         // By zipping up the lines in reverse iterator order, that is lines are zipped together from outside to inside.
         // Even amount: A B C D E F is zipped in: AF, BE, CD etc...
@@ -28,9 +28,13 @@ impl Grid {
         let calc_score = |lines: &Vec<String>| -> usize {
             (1..lines.len())
                 .filter(|&i| {
-                    let nm = lines[..i].iter().rev().zip(lines[i..].iter())
+                    let nm = lines[..i]
+                        .iter()
+                        .rev()
+                        .zip(lines[i..].iter())
                         .flat_map(|(l, r)| l.chars().zip(r.chars()))
-                        .filter(|(a, b)| a != b).count();
+                        .filter(|(a, b)| a != b)
+                        .count();
                     nm == target
                 })
                 .map(|i| i * if lines == &rows { 100 } else { 1 })
@@ -41,23 +45,33 @@ impl Grid {
     }
 
     fn rows(&self) -> Vec<String> {
-        self.grid.chunks(self.width)
+        self.grid
+            .chunks(self.width)
             .map(|chunk| chunk.iter().collect())
             .collect()
     }
 
     fn columns(&self) -> Vec<String> {
-        (0..self.width).map(|i| {
-            self.grid[i..].chunks(self.width)
-                .map(|chunk| chunk.get(0).unwrap())
-                .collect()
-        }).collect()
+        (0..self.width)
+            .map(|i| {
+                self.grid[i..]
+                    .chunks(self.width)
+                    .map(|chunk| chunk.get(0).unwrap())
+                    .collect()
+            })
+            .collect()
     }
 }
 
 pub fn solve(data: &[Grid]) -> (usize, usize) {
-    let p1 = data.par_iter().map(|g| g.calculate_reflection_score(0)).sum();
-    let p2 = data.par_iter().map(|g| g.calculate_reflection_score(1)).sum();
+    let p1 = data
+        .par_iter()
+        .map(|g| g.calculate_reflection_score(0))
+        .sum();
+    let p2 = data
+        .par_iter()
+        .map(|g| g.calculate_reflection_score(1))
+        .sum();
 
     (p1, p2)
 }
@@ -66,7 +80,7 @@ pub fn parse(data: &[String]) -> Vec<Grid> {
     let mut grids = Vec::new();
     let mut group = Vec::new();
     let mut width = 0;
- 
+
     for line in data {
         if line.is_empty() {
             if !group.is_empty() {
@@ -80,11 +94,11 @@ pub fn parse(data: &[String]) -> Vec<Grid> {
             group.extend(line.chars());
         }
     }
- 
+
     if !group.is_empty() {
         grids.push(Grid::new(group, width));
     }
- 
+
     grids
 }
 
