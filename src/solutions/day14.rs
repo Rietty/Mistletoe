@@ -51,14 +51,36 @@ pub fn shift_rocks(mirrors: &String) -> String {
     new_row
 }
 
-pub fn solve(data: &[String]) -> (i32, i32) {
-
-    
+pub fn solve(data: &Vec<Grid>) -> (i32, i32) {
+    // For the grid, get the columns, and then for each column, shift the rocks, then print them out.
+    data.columns();
+    println!("cols: {:?}", cols);
     (0, 0)
 }
 
-pub fn parse(data: &[String]) -> Vec<String> {
-    data.iter().map(|s| s.to_string()).collect()
+pub fn parse(data: &[String]) -> Vec<Grid> {
+    let mut grids = Vec::new();
+    let mut group = Vec::new();
+    let mut width = None;
+
+    for line in data {
+        if line.is_empty() {
+            if !group.is_empty() {
+                grids.push(Grid::new(group, width.unwrap()));
+                group = Vec::new();
+                width = None;
+            }
+        } else {
+            width.get_or_insert(line.len());
+            group.extend(line.chars());
+        }
+    }
+
+    if !group.is_empty() {
+        grids.push(Grid::new(group, width.unwrap()));
+    }
+
+    grids
 }
 
 #[allow(dead_code)]
@@ -86,7 +108,7 @@ mod tests {
 
     #[test]
     fn part1() {
-        let expected = 0;
+        let expected = 136;
         let res = solve(&parse(&crate::library::read_file("testdata/day14.txt")));
         assert_eq!(res.0, expected);
         println!("Part 1: Expected: {}, Actual: {}", expected, res.0);

@@ -68,6 +68,7 @@ pub fn solve(data: &[Grid]) -> (usize, usize) {
         .par_iter()
         .map(|g| g.calculate_reflection_score(0))
         .sum();
+
     let p2 = data
         .par_iter()
         .map(|g| g.calculate_reflection_score(1))
