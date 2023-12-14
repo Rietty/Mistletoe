@@ -79,24 +79,23 @@ pub fn solve(data: &[Grid]) -> (usize, usize) {
 pub fn parse(data: &[String]) -> Vec<Grid> {
     let mut grids = Vec::new();
     let mut group = Vec::new();
-    let mut width = 0;
+    let mut width = None;
 
     for line in data {
         if line.is_empty() {
             if !group.is_empty() {
-                grids.push(Grid::new(group, width));
+                grids.push(Grid::new(group, width.unwrap()));
                 group = Vec::new();
+                width = None;
             }
         } else {
-            if group.is_empty() {
-                width = line.len();
-            }
+            width.get_or_insert(line.len());
             group.extend(line.chars());
         }
     }
 
     if !group.is_empty() {
-        grids.push(Grid::new(group, width));
+        grids.push(Grid::new(group, width.unwrap()));
     }
 
     grids
