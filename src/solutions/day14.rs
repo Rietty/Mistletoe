@@ -36,51 +36,54 @@ pub fn shift_rocks(mirrors: &String) -> String {
     // Each row is a String consisting of '.', '#' and 'O'. We want to move the 'O' to the left-most position it can go.
     // So going from left to right, we'll move the 'O' to the left as long as there is a '.' to the left of it.
     // If we reach a '#' or 'O' to its left, we'll stop moving it.
-    let mut new_row = String::new();
-    let mut found_rock = false;
-    for c in mirrors.chars() {
-        if c == 'O' {
-            found_rock = true;
-        }
-        if found_rock && c == '.' {
-            new_row.push('O');
-        } else {
-            new_row.push(c);
-        }
-    }
-    new_row
-}
+    let mut chars = mirrors.chars().collect::<Vec<_>>();
+    let mut pos = 0;
 
-pub fn solve(data: &Vec<Grid>) -> (i32, i32) {
-    // For the grid, get the columns, and then for each column, shift the rocks, then print them out.
-    data.columns();
-    println!("cols: {:?}", cols);
-    (0, 0)
-}
-
-pub fn parse(data: &[String]) -> Vec<Grid> {
-    let mut grids = Vec::new();
-    let mut group = Vec::new();
-    let mut width = None;
-
-    for line in data {
-        if line.is_empty() {
-            if !group.is_empty() {
-                grids.push(Grid::new(group, width.unwrap()));
-                group = Vec::new();
-                width = None;
+    while pos < chars.len() {
+        if chars[pos] == 'O' {
+            let mut current = pos;
+            while current > 0 && chars[current - 1] == '.' {
+                chars.swap(current, current - 1);
+                current -= 1;
             }
-        } else {
-            width.get_or_insert(line.len());
-            group.extend(line.chars());
         }
+        pos += 1;
     }
 
-    if !group.is_empty() {
-        grids.push(Grid::new(group, width.unwrap()));
-    }
+    chars.into_iter().collect()
+}
 
-    grids
+pub fn calculate_score(shifted: Vec<String>) -> i32 {
+    // Score is calculated based off the length of the String and the positions of the 'O's.
+    // For example if the String is "OOO....", the score is 7+6+5 = 18.
+    // If the String is "O.O.O.O", the score is 7+5+3+1 = 16.
+    shifted.iter().fold(0, |acc, s| {
+        acc + s.chars().rev().enumerate().fold(0, |acc, (i, c)| {
+            acc + if c == 'O' { i as i32 + 1 } else { 0 }
+        })
+    })
+}
+
+pub fn solve(data: &Grid) -> (i32, i32) {
+    // For the grid, get the columns, and then for each column, shift the rocks, then print them out.
+    let cols = data.columns();
+
+    // Shift the rocks in each column.
+    let shifted = cols
+        .par_iter()
+        .map(|col| shift_rocks(col))
+        .collect::<Vec<_>>();
+
+    // Calculate the score for part 1.
+    let p1 = calculate_score(shifted);
+
+    (p1, 0)
+}
+
+pub fn parse(data: &[String]) -> Grid {
+    let width = data.first().map_or(0, |s| s.len());
+    let grid = data.iter().flat_map(|s| s.chars()).collect();
+    Grid::new(grid, width)
 }
 
 #[allow(dead_code)]
