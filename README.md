@@ -41,7 +41,7 @@
 <a href="src/solutions/day13.rs">
   <img src="media/2023/13.png" width="161px">
 </a>
-<a href="src/solutions/day14.rs">
+<a href="src/solutions/day14_backup.rs">
   <img src="media/2023/14.png" width="161px">
 </a>
 <a href="src/solutions/day15.rs">
