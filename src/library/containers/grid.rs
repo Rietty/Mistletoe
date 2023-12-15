@@ -11,17 +11,17 @@ pub struct Grid {
 #[allow(unused)]
 impl Grid {
     // The base new function, it takes a vector of characters and a width.
-    fn new(grid: Vec<char>, width: usize) -> Grid {
+    pub fn new(grid: Vec<char>, width: usize) -> Grid {
         Grid { grid, width }
     }
 
     // Create a new grid from a vector of strings, where each string is a row.
-    fn from_rows(grid: Vec<&str>, width: usize) -> Grid {
+    pub fn from_rows(grid: Vec<&str>, width: usize) -> Grid {
         Grid::new(grid.iter().flat_map(|s| s.chars()).collect(), width)
     }
 
     // Create a new grid from a vector of strings, where each string is a column.
-    fn from_columns(grid: Vec<&str>, width: usize) -> Grid {
+    pub fn from_columns(grid: Vec<&str>, width: usize) -> Grid {
         let mut chars = Vec::with_capacity(grid.len() * width);
         for i in 0..width {
             for j in 0..grid.len() {
@@ -32,12 +32,12 @@ impl Grid {
     }
 
     // Get the rows of the grid, as a series of slices.
-    fn rows(&self) -> Vec<&[char]> {
-        self.grid.chunks(self.width).collect()
+    pub fn rows(&self) -> Vec<Vec<char>> {
+        self.grid.chunks(self.width).map(|chunk| chunk.to_vec()).collect()
     }
 
     // Get the columns of the grid, as a series of slices.
-    fn columns(&self) -> Vec<Vec<char>> {
+    pub fn columns(&self) -> Vec<Vec<char>> {
         (0..self.width)
             .map(|i| {
                 self.grid
@@ -51,12 +51,20 @@ impl Grid {
     }
 
     // Function that will output the grid in a readable format as a giant string.
-    fn to_string(&self) -> String {
-        self.grid.iter().collect()
+    pub fn to_string(&self, newlines: bool) -> String {
+        if newlines {
+            self.grid
+                .chunks(self.width)
+                .map(|chunk| chunk.iter().collect::<String>())
+                .collect::<Vec<String>>()
+                .join("\n")
+        } else {
+            self.grid.iter().collect::<String>()
+        }
     }
 
     // Transpose the 1d grid using the transpose crate.
-    fn transpose(&mut self) {
+    pub fn transpose(&mut self) {
         // Get the width and height of the grid.
         let width = self.width;
         let height = self.grid.len() / width;
@@ -75,7 +83,7 @@ impl Grid {
     }
 
     // Flip the grid horizontally, (on the x-axis).
-    fn flip_x(&mut self) {
+    pub fn flip_x(&mut self) {
         let height = self.grid.len() / self.width;
         for row in 0..height / 2 {
             for col in 0..self.width {
@@ -87,7 +95,7 @@ impl Grid {
     }
 
     // Flip the grid vertically, (on the y-axis).
-    fn flip_y(&mut self) {
+    pub fn flip_y(&mut self) {
         let height = self.grid.len() / self.width;
         for row in 0..height {
             let start = row * self.width;
