@@ -2,10 +2,6 @@
 #[allow(unused_imports)]
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
-// Load library module.
-#[path = "../src/library.rs"]
-mod library;
-
 // Load the solutions folder mod.rs
 #[path = "../src/solutions/mod.rs"]
 mod solutions;

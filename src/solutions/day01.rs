@@ -61,7 +61,7 @@ pub fn parse(data: &[String]) -> Vec<String> {
 
 #[allow(dead_code)]
 pub fn run() {
-    let res = solve(&parse(&crate::library::read_file("data/day01.txt")));
+    let res = solve(&parse(&utility::file::read_file("data/day01.txt")));
     println!("Day 01:\nStar 1: {}\nStar 2: {}\n", res.0, res.1);
 }
 
