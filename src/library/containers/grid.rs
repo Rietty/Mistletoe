@@ -16,12 +16,12 @@ impl Grid {
     }
 
     // Create a new grid from a vector of strings, where each string is a row.
-    pub fn from_rows(grid: Vec<&str>, width: usize) -> Grid {
+    pub fn from_rows(grid: Vec<String>, width: usize) -> Grid {
         Grid::new(grid.iter().flat_map(|s| s.chars()).collect(), width)
     }
 
     // Create a new grid from a vector of strings, where each string is a column.
-    pub fn from_columns(grid: Vec<&str>, width: usize) -> Grid {
+    pub fn from_columns(grid: Vec<String>, width: usize) -> Grid {
         let mut chars = Vec::with_capacity(grid.len() * width);
         for i in 0..width {
             for j in 0..grid.len() {
@@ -29,6 +29,10 @@ impl Grid {
             }
         }
         Grid::new(chars, width)
+    }
+
+    pub fn get_width(&self) -> usize {
+        self.width
     }
 
     // Get the rows of the grid, as a series of slices.
@@ -70,7 +74,7 @@ impl Grid {
         let height = self.grid.len() / width;
 
         // Create a new vector of characters of same length as the grid.
-        let mut new_grid: Vec<char> = Vec::with_capacity(self.grid.len());
+        let mut new_grid: Vec<char> = vec![' '; self.grid.len()];
 
         // Perform the transpose.
         external_transpose(&self.grid, &mut new_grid, width, height);
