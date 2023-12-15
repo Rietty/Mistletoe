@@ -1,7 +1,9 @@
 // Imports
 use std::env;
 
-dirmod::all!(except template);
+// Modules
+mod library;
+mod solutions;
 
 fn main() {
     // Use a pattern matching system to run a solution for a given day, or a wildcard to run all solutions.

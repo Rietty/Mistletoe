@@ -67,7 +67,7 @@ pub fn run() {
 }
 
 #[allow(dead_code)]
-fn benchmark(c: &mut criterion::Criterion) {
+pub fn benchmark(c: &mut criterion::Criterion) {
     let data = parse(&utility::files::read_file("data/day01.txt"));
     c.bench_function("Day 01 - solve:", |b| b.iter(|| solve(&data)));
     c.bench_function("Day 01 - parse & solve:", |b| {
