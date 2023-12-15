@@ -25,4 +25,5 @@ serde = { version = "1.0.150", features = ["derive"] }
 
 [[bench]]
 name = "benchmark"
+path = "src/benchmark.rs"
 harness = false

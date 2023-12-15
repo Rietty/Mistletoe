@@ -1,5 +1,6 @@
 // https://adventofcode.com/2023/day/03
 use std::collections::HashMap;
+use crate::library::utility;
 
 pub fn solve(data: &HashMap<(i32, i32), char>) -> (i32, i32) {
     let mut p1 = 0;
@@ -90,17 +91,17 @@ pub fn parse(data: &[String]) -> HashMap<(i32, i32), char> {
 
 #[allow(dead_code)]
 pub fn run() {
-    let res = solve(&parse(&crate::library::read_file("data/day03.txt")));
+    let res = solve(&parse(&utility::files::read_file("data/day03.txt")));
     println!("Day 03:\nStar 1: {}\nStar 2: {}\n", res.0, res.1);
 }
 
 #[allow(dead_code)]
 pub fn benchmark(c: &mut criterion::Criterion) {
-    let data = parse(&crate::library::read_file("data/day03.txt"));
+    let data = parse(&utility::files::read_file("data/day03.txt"));
     c.bench_function("Day 03 - solve:", |b| b.iter(|| solve(&data)));
     c.bench_function("Day 03 - parse & solve:", |b| {
         b.iter(|| {
-            let data = parse(&crate::library::read_file("data/day03.txt"));
+            let data = parse(&utility::files::read_file("data/day03.txt"));
             solve(&data)
         })
     });
@@ -114,7 +115,7 @@ mod tests {
     #[test]
     fn part1() {
         let expected = 4361;
-        let res = solve(&parse(&crate::library::read_file("testdata/day03.txt")));
+        let res = solve(&parse(&utility::files::read_file("testdata/day03.txt")));
         assert_eq!(res.0, expected);
         println!("Part 1: Expected: {}, Actual: {}", expected, res.0);
     }
@@ -122,7 +123,7 @@ mod tests {
     #[test]
     fn part2() {
         let expected = 467835;
-        let res = solve(&parse(&crate::library::read_file("testdata/day03.txt")));
+        let res = solve(&parse(&utility::files::read_file("testdata/day03.txt")));
         assert_eq!(res.1, expected);
         println!("Part 2: Expected: {}, Actual: {}", expected, res.1);
     }

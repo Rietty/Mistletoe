@@ -1,5 +1,6 @@
 // https://adventofcode.com/2023/day/06
-use crate::library::concat_slice_to_num;
+use crate::library::containers::vector::concat_slice_to_num;
+use crate::library::utility;
 
 pub fn ways_to_win(t: u64, d: u64) -> u64 {
     // This is actually an equation of a quadratic form: -x^2 + tx - d = 0
@@ -46,17 +47,17 @@ pub fn parse(data: &[String]) -> (Vec<u64>, Vec<u64>) {
 
 #[allow(dead_code)]
 pub fn run() {
-    let res = solve(&parse(&crate::library::read_file("data/day06.txt")));
+    let res = solve(&parse(&utility::files::read_file("data/day06.txt")));
     println!("Day 06:\nStar 1: {}\nStar 2: {}\n", res.0, res.1);
 }
 
 #[allow(dead_code)]
 pub fn benchmark(c: &mut criterion::Criterion) {
-    let data = parse(&crate::library::read_file("data/day06.txt"));
+    let data = parse(&utility::files::read_file("data/day06.txt"));
     c.bench_function("Day 06 - solve:", |b| b.iter(|| solve(&data)));
     c.bench_function("Day 06 - parse & solve:", |b| {
         b.iter(|| {
-            let data = parse(&crate::library::read_file("data/day06.txt"));
+            let data = parse(&utility::files::read_file("data/day06.txt"));
             solve(&data)
         })
     });
@@ -70,7 +71,7 @@ mod tests {
     #[test]
     fn part1() {
         let expected = 288;
-        let res = solve(&parse(&crate::library::read_file("testdata/day06.txt")));
+        let res = solve(&parse(&utility::files::read_file("testdata/day06.txt")));
         assert_eq!(res.0, expected);
         println!("Part 1: Expected: {}, Actual: {}", expected, res.0);
     }
@@ -78,7 +79,7 @@ mod tests {
     #[test]
     fn part2() {
         let expected = 71503;
-        let res = solve(&parse(&crate::library::read_file("testdata/day06.txt")));
+        let res = solve(&parse(&utility::files::read_file("testdata/day06.txt")));
         assert_eq!(res.1, expected);
         println!("Part 2: Expected: {}, Actual: {}", expected, res.1);
     }

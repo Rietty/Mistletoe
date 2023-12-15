@@ -1,5 +1,6 @@
 // https://adventofcode.com/2023/day/02
 use std::collections::HashMap;
+use crate::library::utility;
 
 const MAX_RED: i32 = 12;
 const MAX_GREEN: i32 = 13;
@@ -65,17 +66,17 @@ pub fn parse(data: &[String]) -> Vec<(i32, i32, i32, i32)> {
 
 #[allow(dead_code)]
 pub fn run() {
-    let res = solve(&parse(&crate::library::read_file("data/day02.txt")));
+    let res = solve(&parse(&utility::files::read_file("data/day02.txt")));
     println!("Day 02:\nStar 1: {}\nStar 2: {}\n", res.0, res.1);
 }
 
 #[allow(dead_code)]
 pub fn benchmark(c: &mut criterion::Criterion) {
-    let data = parse(&crate::library::read_file("data/day02.txt"));
+    let data = parse(&utility::files::read_file("data/day02.txt"));
     c.bench_function("Day 02 - solve:", |b| b.iter(|| solve(&data)));
     c.bench_function("Day 02 - parse & solve:", |b| {
         b.iter(|| {
-            let data = parse(&crate::library::read_file("data/day02.txt"));
+            let data = parse(&utility::files::read_file("data/day02.txt"));
             solve(&data)
         })
     });
@@ -89,7 +90,7 @@ mod tests {
     #[test]
     fn part1() {
         let expected = 8;
-        let res = solve(&parse(&crate::library::read_file("testdata/day02.txt")));
+        let res = solve(&parse(&utility::files::read_file("testdata/day02.txt")));
         assert_eq!(res.0, expected);
         println!("Part 1: Expected: {}, Actual: {}", expected, res.0);
     }
@@ -97,7 +98,7 @@ mod tests {
     #[test]
     fn part2() {
         let expected = 2286;
-        let res = solve(&parse(&crate::library::read_file("testdata/day02.txt")));
+        let res = solve(&parse(&utility::files::read_file("testdata/day02.txt")));
         assert_eq!(res.1, expected);
         println!("Part 2: Expected: {}, Actual: {}", expected, res.1);
     }

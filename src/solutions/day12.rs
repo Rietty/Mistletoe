@@ -2,6 +2,7 @@
 use lru::LruCache;
 use rayon::prelude::*;
 use std::num::NonZeroUsize;
+use crate::library::utility;
 
 #[derive(Debug)]
 pub struct Springs {
@@ -133,17 +134,17 @@ pub fn parse(data: &[String]) -> Vec<Springs> {
 
 #[allow(dead_code)]
 pub fn run() {
-    let res = solve(&parse(&crate::library::read_file("data/day12.txt")));
+    let res = solve(&parse(&utility::files::read_file("data/day12.txt")));
     println!("Day 12:\nStar 1: {}\nStar 2: {}\n", res.0, res.1);
 }
 
 #[allow(dead_code)]
 pub fn benchmark(c: &mut criterion::Criterion) {
-    let data = parse(&crate::library::read_file("data/day12.txt"));
+    let data = parse(&utility::files::read_file("data/day12.txt"));
     c.bench_function("Day 12 - solve:", |b| b.iter(|| solve(&data)));
     c.bench_function("Day 12 - parse & solve:", |b| {
         b.iter(|| {
-            let data = parse(&crate::library::read_file("data/day12.txt"));
+            let data = parse(&utility::files::read_file("data/day12.txt"));
             solve(&data)
         })
     });
@@ -157,7 +158,7 @@ mod tests {
     #[test]
     fn part1() {
         let expected = 21;
-        let res = solve(&parse(&crate::library::read_file("testdata/day12.txt")));
+        let res = solve(&parse(&utility::files::read_file("testdata/day12.txt")));
         assert_eq!(res.0, expected);
         println!("Part 1: Expected: {}, Actual: {}", expected, res.0);
     }
@@ -165,7 +166,7 @@ mod tests {
     #[test]
     fn part2() {
         let expected = 525152;
-        let res = solve(&parse(&crate::library::read_file("testdata/day12.txt")));
+        let res = solve(&parse(&utility::files::read_file("testdata/day12.txt")));
         assert_eq!(res.1, expected);
         println!("Part 2: Expected: {}, Actual: {}", expected, res.1);
     }
