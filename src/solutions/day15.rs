@@ -1,7 +1,6 @@
 // https://adventofcode.com/2023/day/15
 use crate::library::utility;
 use core::panic;
-use std::collections::VecDeque;
 
 // Custom hashfunction for a string.
 pub fn hash(s: &String) -> i32 {
@@ -34,7 +33,7 @@ pub fn solve(data: &[String]) -> (i32, i32) {
     let mut p1 = 0;
 
     // Create a vector of 256 elements, each containing a VecDeque that holds a given String.
-    let mut buckets: Vec<VecDeque<(String, i32)>> = vec![VecDeque::new(); 256];
+    let mut buckets: Vec<Vec<(String, i32)>> = vec![vec![]; 256];
 
     // Iterate thru the data..
     for d in data {
@@ -65,7 +64,7 @@ pub fn solve(data: &[String]) -> (i32, i32) {
                 {
                     buckets[index as usize][pos].1 = value;
                 } else {
-                    buckets[index as usize].push_back((label, value));
+                    buckets[index as usize].push((label, value));
                 }
             }
 
