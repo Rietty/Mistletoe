@@ -1,11 +1,11 @@
 // https://adventofcode.com/2023/day/14
 use crate::library::{containers::grid::Grid, utility};
-use rayon::prelude::*;
-use std::collections::HashMap;
+//use rayon::prelude::*;
+//use std::collections::HashMap;
 
-const TOTAL_CYCLES: i32 = 1_000_000_000;
+const _TOTAL_CYCLES: i32 = 1_000_000_000;
 
-pub fn solve(data: &Grid) -> (i32, i32) {
+pub fn solve(_data: &Grid) -> (i32, i32) {
     (0, 0)
 }
 
