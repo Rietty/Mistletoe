@@ -27,7 +27,7 @@ fn tilt_left(grid: &mut Grid) {
     // Need to go from Vec<Vec<char>> to Vec<String>.
     *grid = Grid::from_rows(
         rows.iter().map(|row| row.iter().collect()).collect(),
-        grid.get_width(),
+        grid.width(),
     );
 }
 

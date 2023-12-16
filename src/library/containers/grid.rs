@@ -8,6 +8,24 @@ pub struct Grid {
     width: usize,
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+pub struct Position {
+    pub x: usize,
+    pub y: usize,
+}
+
+#[allow(unused)]
+impl Position {
+    pub fn new(x: usize, y: usize) -> Self {
+        Self { x, y }
+    }
+
+    // Check if position is within the grid bounds
+    pub fn valid(&self, grid: &Grid) -> bool {
+        self.x < grid.width() && self.y < grid.height()
+    }
+}
+
 #[allow(unused)]
 impl Grid {
     // The base new function, it takes a vector of characters and a width.
@@ -31,13 +49,32 @@ impl Grid {
         Grid::new(chars, width)
     }
 
-    pub fn get_width(&self) -> usize {
+    pub fn get(&self, row: usize, col: usize) -> Option<char> {
+        if row >= self.height() || col >= self.width() {
+            None
+        } else {
+            Some(self.grid[row * self.width + col])
+        }
+    }
+
+    pub fn get_pos(&self, pos: Position) -> Option<char> {
+        self.get(pos.y, pos.x)
+    }
+
+    pub fn width(&self) -> usize {
         self.width
+    }
+
+    pub fn height(&self) -> usize {
+        self.grid.len() / self.width
     }
 
     // Get the rows of the grid, as a series of slices.
     pub fn rows(&self) -> Vec<Vec<char>> {
-        self.grid.chunks(self.width).map(|chunk| chunk.to_vec()).collect()
+        self.grid
+            .chunks(self.width)
+            .map(|chunk| chunk.to_vec())
+            .collect()
     }
 
     // Get the columns of the grid, as a series of slices.
