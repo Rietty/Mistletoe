@@ -78,13 +78,12 @@ pub fn raytrace(grid: &Grid, starting_beam: &Beam) -> i32 {
 
         // Need to get the next character in the grid according to the beam's position, if we can.
         // Else we can skip this beam.
-        let next_pos = beam.next(grid);
-        if let Some(pos) = next_pos {
-            let ch = grid.get_pos(pos);
+        if let Some(next_pos) = beam.next(grid) {
+            let ch = grid.get_pos(next_pos);
             match ch {
                 Some('.') => {
                     // If the next character is a '.', we can keep going in the same direction.
-                    beams.push(Beam::new(beam.dir, beam.next(grid).unwrap()));
+                    beams.push(Beam::new(beam.dir, next_pos));
                 }
                 Some('/') => {
                     // Change direction based on the current direction.
@@ -94,7 +93,7 @@ pub fn raytrace(grid: &Grid, starting_beam: &Beam) -> i32 {
                         Direction::Left => Direction::Down,
                         Direction::Right => Direction::Up,
                     };
-                    beams.push(Beam::new(dir, beam.next(grid).unwrap()));
+                    beams.push(Beam::new(dir, next_pos));
                 }
                 Some('\\') => {
                     // Change direction based on the current direction.
@@ -104,22 +103,22 @@ pub fn raytrace(grid: &Grid, starting_beam: &Beam) -> i32 {
                         Direction::Left => Direction::Up,
                         Direction::Right => Direction::Down,
                     };
-                    beams.push(Beam::new(dir, beam.next(grid).unwrap()));
+                    beams.push(Beam::new(dir, next_pos));
                 }
                 Some('|') => {
                     // This is a splitter, if the beam comes from left or right, we split it into two beams, one going up and one going down.
                     // If the beam comes from up or down we let it continue in the same direction.
                     match beam.dir {
                         Direction::Left => {
-                            beams.push(Beam::new(Direction::Up, beam.next(grid).unwrap()));
-                            beams.push(Beam::new(Direction::Down, beam.next(grid).unwrap()));
+                            beams.push(Beam::new(Direction::Up, next_pos));
+                            beams.push(Beam::new(Direction::Down, next_pos));
                         }
                         Direction::Right => {
-                            beams.push(Beam::new(Direction::Up, beam.next(grid).unwrap()));
-                            beams.push(Beam::new(Direction::Down, beam.next(grid).unwrap()));
+                            beams.push(Beam::new(Direction::Up, next_pos));
+                            beams.push(Beam::new(Direction::Down, next_pos));
                         }
                         _ => {
-                            beams.push(Beam::new(beam.dir, beam.next(grid).unwrap()));
+                            beams.push(Beam::new(beam.dir, next_pos));
                         }
                     }
                 }
@@ -128,15 +127,15 @@ pub fn raytrace(grid: &Grid, starting_beam: &Beam) -> i32 {
                     // If the beam comes from left or right we let it continue in the same direction.
                     match beam.dir {
                         Direction::Up => {
-                            beams.push(Beam::new(Direction::Left, beam.next(grid).unwrap()));
-                            beams.push(Beam::new(Direction::Right, beam.next(grid).unwrap()));
+                            beams.push(Beam::new(Direction::Left, next_pos));
+                            beams.push(Beam::new(Direction::Right, next_pos));
                         }
                         Direction::Down => {
-                            beams.push(Beam::new(Direction::Left, beam.next(grid).unwrap()));
-                            beams.push(Beam::new(Direction::Right, beam.next(grid).unwrap()));
+                            beams.push(Beam::new(Direction::Left, next_pos));
+                            beams.push(Beam::new(Direction::Right, next_pos));
                         }
                         _ => {
-                            beams.push(Beam::new(beam.dir, beam.next(grid).unwrap()));
+                            beams.push(Beam::new(beam.dir, next_pos));
                         }
                     }
                 }
