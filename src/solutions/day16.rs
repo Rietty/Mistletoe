@@ -3,6 +3,7 @@ use crate::library::{
     containers::grid::{Grid, Position},
     utility,
 };
+use rayon::prelude::*;
 use std::collections::HashSet;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
@@ -171,23 +172,33 @@ pub fn solve(data: &Grid) -> (i32, i32) {
 
     // For part 2 we need to find the maximum amount of tiles that can be reached by a beam, so we need to try all possible starting directions and positions from the edges of the grid.
     // So iterate thru all points on west edge, and go right, then iterate thru all points on the north edge, and go down, etc.
-    let mut p2 = 0;
+
+    // Create a vector to hold all the beams we want to raytrace.
+    let mut beams: Vec<Beam> = Vec::new();
 
     // Iterating through the top and bottom rows
     for x in 0..data.width() {
-        let beam_down = Beam::new(Direction::Down, Position::new(x, 0));
-        let beam_up = Beam::new(Direction::Up, Position::new(x, data.height() - 1));
-        p2 = p2.max(raytrace(data, &beam_down));
-        p2 = p2.max(raytrace(data, &beam_up));
+        beams.push(Beam::new(Direction::Down, Position::new(x, 0)));
+        beams.push(Beam::new(
+            Direction::Up,
+            Position::new(x, data.height() - 1),
+        ));
     }
 
     // Iterating through the left and right columns
     for y in 0..data.height() {
-        let beam_right = Beam::new(Direction::Right, Position::new(0, y));
-        let beam_left = Beam::new(Direction::Left, Position::new(data.width() - 1, y));
-        p2 = p2.max(raytrace(data, &beam_right));
-        p2 = p2.max(raytrace(data, &beam_left));
+        beams.push(Beam::new(Direction::Right, Position::new(0, y)));
+        beams.push(Beam::new(
+            Direction::Left,
+            Position::new(data.width() - 1, y),
+        ));
     }
+
+    // Iterate through all the beams, and raytrace them, and keep track of the maximum amount of tiles we've seen.
+    let p2 = beams
+        .par_iter()
+        .map(|beam| raytrace(data, beam))
+        .reduce(|| 0, |max, tiles_seen| std::cmp::max(max, tiles_seen));
 
     (p1, p2)
 }
