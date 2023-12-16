@@ -46,7 +46,7 @@ impl Beam {
             Direction::Right => Position::new(self.pos.x + 1, self.pos.y),
         };
 
-        if new_position.valid(grid) {
+        if grid.is_in_bounds(new_position) {
             Some(new_position)
         } else {
             None

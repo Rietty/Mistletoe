@@ -19,11 +19,6 @@ impl Position {
     pub fn new(x: usize, y: usize) -> Self {
         Self { x, y }
     }
-
-    // Check if position is within the grid bounds
-    pub fn valid(&self, grid: &Grid) -> bool {
-        self.x < grid.width() && self.y < grid.height()
-    }
 }
 
 #[allow(unused)]
@@ -59,6 +54,10 @@ impl Grid {
 
     pub fn get_pos(&self, pos: Position) -> Option<char> {
         self.get(pos.y, pos.x)
+    }
+
+    pub fn is_in_bounds(&self, pos: Position) -> bool {
+        pos.x < self.width() && pos.y < self.height()
     }
 
     pub fn width(&self) -> usize {
