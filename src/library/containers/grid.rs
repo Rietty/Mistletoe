@@ -9,6 +9,19 @@ pub struct Grid {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+pub struct Point {
+    pub x: i32,
+    pub y: i32,
+}
+
+#[allow(unused)]
+impl Point {
+    pub fn new(x: i32, y: i32) -> Self {
+        Self { x, y }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct Position {
     pub x: usize,
     pub y: usize,
@@ -54,6 +67,10 @@ impl Grid {
 
     pub fn get_pos(&self, pos: Position) -> Option<char> {
         self.get(pos.y, pos.x)
+    }
+
+    pub fn get_point(&self, point: Point) -> Option<char> {
+        self.get(point.y as usize, point.x as usize)
     }
 
     pub fn is_in_bounds(&self, pos: Position) -> bool {
