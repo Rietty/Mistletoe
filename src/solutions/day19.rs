@@ -1,19 +1,25 @@
 // https://adventofcode.com/2023/day/19
 use crate::library::utility;
-use std::collections::{VecDeque, HashMap};
+use rayon::prelude::*;
+use std::collections::{HashMap, VecDeque};
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct Part {
     x: i128,
     m: i128,
     a: i128,
-    s: i128
+    s: i128,
 }
 
 // Reads a string and converts it into the respective values for each category and makes the part.
 impl Part {
     fn from_string(input: &str) -> Self {
-        let mut part = Part { x: 0, m: 0, a: 0, s: 0 };
+        let mut part = Part {
+            x: 0,
+            m: 0,
+            a: 0,
+            s: 0,
+        };
         for pair in input[1..input.len() - 1].split(',') {
             let mut kv = pair.split('=');
             let key = kv.next().unwrap();
@@ -47,9 +53,19 @@ impl Rule {
             let value_target: Vec<&str> = parts[1].split(':').collect();
             let value = value_target[0].parse::<i128>().unwrap();
             let target = value_target[1].to_string();
-            Rule { category, comparator, value: Some(value), target }
+            Rule {
+                category,
+                comparator,
+                value: Some(value),
+                target,
+            }
         } else {
-            Rule { category: None, comparator: None, value: None, target: input.to_string() }
+            Rule {
+                category: None,
+                comparator: None,
+                value: None,
+                target: input.to_string(),
+            }
         }
     }
 }
@@ -57,14 +73,14 @@ impl Rule {
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct Workflow {
     label: String,
-    rules: Vec<Rule>
+    rules: Vec<Rule>,
 }
 
 impl Workflow {
     fn from_string(input: &str) -> Self {
         let parts: Vec<&str> = input.split('{').collect();
         let label = parts[0].to_string();
-        let rules_str = &parts[1][..parts[1].len()-1]; // Remove the closing '}'
+        let rules_str = &parts[1][..parts[1].len() - 1]; // Remove the closing '}'
         let rules: Vec<Rule> = rules_str.split(',').map(|s| Rule::from_string(s)).collect();
         Workflow { label, rules }
     }
@@ -109,7 +125,7 @@ pub fn flow(workflows: &HashMap<String, Workflow>, part: &Part) -> bool {
                                 }
                             }
                         }
-                    },
+                    }
                     '<' => {
                         if category < rule.value.unwrap() {
                             match rule.target.as_ref() {
@@ -121,8 +137,8 @@ pub fn flow(workflows: &HashMap<String, Workflow>, part: &Part) -> bool {
                                 }
                             }
                         }
-                    },
-                    _ => unreachable!("Comparator should exist!")
+                    }
+                    _ => unreachable!("Comparator should exist!"),
                 }
             } else {
                 // If there is no value, we simply match and as such return as needed.. or push something into the queue.
@@ -138,21 +154,53 @@ pub fn flow(workflows: &HashMap<String, Workflow>, part: &Part) -> bool {
         }
     }
 
-    unreachable!("This function should always return well before this point!");    
+    unreachable!("This function should always return well before this point!");
 }
 
 pub fn solve(data: &(HashMap<String, Workflow>, Vec<Part>)) -> (i128, i128) {
     let (workflows, parts) = data;
 
-    let p1: i128 = parts.iter().map(|p| {
-        if flow(&workflows, &p) {
-            p.x + p.m + p.a + p.s
-        } else {
-            0 
-        }
-    } ).sum();
+    let p1: i128 = parts
+        .par_iter()
+        .map(|p| {
+            if flow(&workflows, &p) {
+                p.x + p.m + p.a + p.s
+            } else {
+                0
+            }
+        })
+        .sum();
 
-    (p1, 0)
+    // For each combination of x, m, a, s, we need to check if it's valid. If it is, we count it up.
+    // Need to do 1-4000 inclusive of x, m, a, s and it needs to be in parallel.
+    let p2: i128 = (1..=4000)
+        .into_par_iter()
+        .map(|x| {
+            (1..=4000)
+                .into_par_iter()
+                .map(|m| {
+                    (1..=4000)
+                        .into_par_iter()
+                        .map(|a| {
+                            (1..=4000)
+                                .into_par_iter()
+                                .map(|s| {
+                                    let part = Part { x, m, a, s };
+                                    if flow(&workflows, &part) {
+                                        1
+                                    } else {
+                                        0
+                                    }
+                                })
+                                .sum::<i128>()
+                        })
+                        .sum::<i128>()
+                })
+                .sum::<i128>()
+        })
+        .sum::<i128>();
+
+    (p1, p2)
 }
 
 pub fn parse(data: &[String]) -> (HashMap<String, Workflow>, Vec<Part>) {
