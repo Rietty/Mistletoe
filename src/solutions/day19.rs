@@ -36,6 +36,16 @@ impl Part {
     }
 }
 
+// Ranges are INCLUSIVE on both sides, so if we have a range of (1, 4000) it will include 1 and 4000.
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub struct PartRange {
+    label: String, // This label is designed to be the label of the workflow that it is currently in, or will be sent to.
+    x: (i128, i128),
+    m: (i128, i128),
+    a: (i128, i128),
+    s: (i128, i128),
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct Rule {
     category: Option<char>,
@@ -84,6 +94,53 @@ impl Workflow {
         let rules: Vec<Rule> = rules_str.split(',').map(|s| Rule::from_string(s)).collect();
         Workflow { label, rules }
     }
+}
+
+// This function will work on processing all the workflows, in their correct rule order and splitting up and creating new intervals as needed.
+pub fn rangeflow(workflows: &HashMap<String, Workflow>) -> i128 {
+    // Start off with a single interval, for all the parts.
+    // Create a sort of queue, that will process interval ranges and split them up as needed.
+    let mut queue: VecDeque<PartRange> = VecDeque::new();
+    let mut accepted: Vec<PartRange> = Vec::new();
+
+    queue.push_back(PartRange {
+        label: "in".to_string(),
+        x: (1, 4000),
+        m: (1, 4000),
+        s: (1, 4000),
+        a: (1, 4000),
+    });
+
+    // Keep going until the queue is fully empty.
+    while !queue.is_empty() {
+        // Pop the first item off the queue and start processing it.
+        let mut interval = queue.pop_front().unwrap();
+        let label = interval.label;
+        // Get the rules of the current interval via the label.
+        let rules = &workflows[&label].rules;
+
+        // Iterate thru the rules:
+        for rule in rules {
+            // Check if the rule has a category, if it does not then it's simply a jump to another workflow and we will merely relabel the interval and push it back into the queue.
+            // Unless the label is "A" or "R" in which case we will need to either discard the interval or add it to a list of accepted intervals.
+            if rule.category.is_some() {
+                todo!("Come back to this later..");
+            } else {
+                // Check what the target is, if it's "A" or "R" then we will need to either discard the interval or add it to a list of accepted intervals.
+                match label.as_ref() {
+                    "A" => accepted.push(interval),
+                    "R" => (),
+                    _ => {
+                        // If the target is not "A" or "R" then we will need to relabel the interval and push it back into the queue.
+                        interval.label = rule.target.to_string();
+                        queue.push_back(interval);
+                    }
+                }
+            }
+        }
+    }
+
+    0
 }
 
 // This function will follow the flow of a part and return a bool for acceptance or rejection based on it.
@@ -171,41 +228,16 @@ pub fn solve(data: &(HashMap<String, Workflow>, Vec<Part>)) -> (i128, i128) {
         })
         .sum();
 
-    // For each combination of x, m, a, s, we need to check if it's valid. If it is, we count it up.
-    // Need to do 1-4000 inclusive of x, m, a, s and it needs to be in parallel.
-    let p2: i128 = (1..=4000)
-        .into_par_iter()
-        .map(|x| {
-            (1..=4000)
-                .into_par_iter()
-                .map(|m| {
-                    (1..=4000)
-                        .into_par_iter()
-                        .map(|a| {
-                            (1..=4000)
-                                .into_par_iter()
-                                .map(|s| {
-                                    let part = Part { x, m, a, s };
-                                    if flow(&workflows, &part) {
-                                        1
-                                    } else {
-                                        0
-                                    }
-                                })
-                                .sum::<i128>()
-                        })
-                        .sum::<i128>()
-                })
-                .sum::<i128>()
-        })
-        .sum::<i128>();
+    let p2: i128 = 0;
+
+    rangeflow(&workflows);
 
     (p1, p2)
 }
 
 pub fn parse(data: &[String]) -> (HashMap<String, Workflow>, Vec<Part>) {
-    let mut workflows: HashMap<String, Workflow> = HashMap::new();
-    let mut parts: Vec<Part> = Vec::new();
+    let mut workflows: HashMap<String, Workflow> = HashMap::with_capacity(1000);
+    let mut parts: Vec<Part> = Vec::with_capacity(1000);
 
     let split = data.iter().position(|x| x == "").unwrap();
     let (s1, s2) = data.split_at(split);
