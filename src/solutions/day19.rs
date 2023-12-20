@@ -1,19 +1,24 @@
 // https://adventofcode.com/2023/day/19
 use crate::library::utility;
-use std::collections::{VecDeque, HashMap};
+use std::collections::{HashMap, VecDeque};
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct Part {
     x: i128,
     m: i128,
     a: i128,
-    s: i128
+    s: i128,
 }
 
 // Reads a string and converts it into the respective values for each category and makes the part.
 impl Part {
     fn from_string(input: &str) -> Self {
-        let mut part = Part { x: 0, m: 0, a: 0, s: 0 };
+        let mut part = Part {
+            x: 0,
+            m: 0,
+            a: 0,
+            s: 0,
+        };
         for pair in input[1..input.len() - 1].split(',') {
             let mut kv = pair.split('=');
             let key = kv.next().unwrap();
@@ -35,7 +40,7 @@ pub struct PartRange {
     x: (i128, i128),
     m: (i128, i128),
     a: (i128, i128),
-    s: (i128, i128)
+    s: (i128, i128),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
@@ -55,9 +60,19 @@ impl Rule {
             let value_target: Vec<&str> = parts[1].split(':').collect();
             let value = value_target[0].parse::<i128>().unwrap();
             let target = value_target[1].to_string();
-            Rule { category, comparator, value: Some(value), target }
+            Rule {
+                category,
+                comparator,
+                value: Some(value),
+                target,
+            }
         } else {
-            Rule { category: None, comparator: None, value: None, target: input.to_string() }
+            Rule {
+                category: None,
+                comparator: None,
+                value: None,
+                target: input.to_string(),
+            }
         }
     }
 }
@@ -65,29 +80,36 @@ impl Rule {
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct Workflow {
     label: String,
-    rules: Vec<Rule>
+    rules: Vec<Rule>,
 }
 
 impl Workflow {
     fn from_string(input: &str) -> Self {
         let parts: Vec<&str> = input.split('{').collect();
         let label = parts[0].to_string();
-        let rules_str = &parts[1][..parts[1].len()-1]; // Remove the closing '}'
+        let rules_str = &parts[1][..parts[1].len() - 1]; // Remove the closing '}'
         let rules: Vec<Rule> = rules_str.split(',').map(|s| Rule::from_string(s)).collect();
         Workflow { label, rules }
     }
 }
 
 // This function will recursively go thru the intervals and use the workflows to calculate them and return a value which eventually is summed up.
-pub fn rangeflow(workflows: &HashMap<String, Workflow>, name: &String, intervals: PartRange) -> i128 {
+pub fn rangeflow(
+    workflows: &HashMap<String, Workflow>,
+    name: &String,
+    intervals: PartRange,
+) -> i128 {
     // First we need to check if the name is an "A" or an "R".
     if name == "A" {
         // If we did get accepted then all these intervals are valid and we need to reduce on them as needed.
-        return [intervals.x, intervals.m, intervals.a, intervals.s].iter().map(|&(lo, hi)| hi - lo + 1).fold(1, |acc, val| acc * val)
+        return [intervals.x, intervals.m, intervals.a, intervals.s]
+            .iter()
+            .map(|&(lo, hi)| hi - lo + 1)
+            .fold(1, |acc, val| acc * val);
     } else if name == "R" {
         return 0;
     }
-    
+
     // Get a mutable copy of the current interval so we can modify it and pass it on.
     let mut intervals = intervals.clone();
 
@@ -102,20 +124,16 @@ pub fn rangeflow(workflows: &HashMap<String, Workflow>, name: &String, intervals
             'm' => intervals.m,
             'a' => intervals.a,
             's' => intervals.s,
-            _ => unreachable!()
+            _ => unreachable!(),
         };
 
         let middle = rule.value.unwrap();
 
         // Calculate the two new intervals based on the value of the op.
         let (left, right): ((i128, i128), (i128, i128)) = match rule.comparator.unwrap() {
-            '>' => {
-                ((middle + 1, high), (low, middle))
-            },
-            '<' => {
-                ((low, middle - 1), (middle, high))
-            }
-            _ => unreachable!()
+            '>' => ((middle + 1, high), (low, middle)),
+            '<' => ((low, middle - 1), (middle, high)),
+            _ => unreachable!(),
         };
 
         // Update the intervals only for the specific thing I want
@@ -125,7 +143,7 @@ pub fn rangeflow(workflows: &HashMap<String, Workflow>, name: &String, intervals
                 'm' => intervals.m = left,
                 'a' => intervals.a = left,
                 's' => intervals.s = left,
-                _ => unreachable!()
+                _ => unreachable!(),
             };
 
             // Call function recursively as needed.
@@ -138,7 +156,7 @@ pub fn rangeflow(workflows: &HashMap<String, Workflow>, name: &String, intervals
                 'm' => intervals.m = left,
                 'a' => intervals.a = left,
                 's' => intervals.s = left,
-                _ => unreachable!()
+                _ => unreachable!(),
             };
         } else {
             return res;
@@ -187,7 +205,7 @@ pub fn flow(workflows: &HashMap<String, Workflow>, part: &Part) -> bool {
                                 }
                             }
                         }
-                    },
+                    }
                     '<' => {
                         if category < rule.value.unwrap() {
                             match rule.target.as_ref() {
@@ -199,8 +217,8 @@ pub fn flow(workflows: &HashMap<String, Workflow>, part: &Part) -> bool {
                                 }
                             }
                         }
-                    },
-                    _ => unreachable!("Comparator should exist!")
+                    }
+                    _ => unreachable!("Comparator should exist!"),
                 }
             } else {
                 // If there is no value, we simply match and as such return as needed.. or push something into the queue.
@@ -216,26 +234,33 @@ pub fn flow(workflows: &HashMap<String, Workflow>, part: &Part) -> bool {
         }
     }
 
-    unreachable!("This function should always return well before this point!");    
+    unreachable!("This function should always return well before this point!");
 }
 
 pub fn solve(data: &(HashMap<String, Workflow>, Vec<Part>)) -> (i128, i128) {
     let (workflows, parts) = data;
 
-    let p1: i128 = parts.iter().map(|p| {
-        if flow(&workflows, &p) {
-            p.x + p.m + p.a + p.s
-        } else {
-            0 
-        }
-    } ).sum();
+    let p1: i128 = parts
+        .iter()
+        .map(|p| {
+            if flow(&workflows, &p) {
+                p.x + p.m + p.a + p.s
+            } else {
+                0
+            }
+        })
+        .sum();
 
-    let p2: i128 = rangeflow(workflows, &"in".to_string(), PartRange {
-        x: (1, 4000),
-        m: (1, 4000),
-        s: (1, 4000),
-        a: (1, 4000)
-    });
+    let p2: i128 = rangeflow(
+        workflows,
+        &"in".to_string(),
+        PartRange {
+            x: (1, 4000),
+            m: (1, 4000),
+            s: (1, 4000),
+            a: (1, 4000),
+        },
+    );
 
     (p1, p2)
 }
