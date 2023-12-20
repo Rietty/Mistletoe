@@ -96,6 +96,105 @@ impl Workflow {
     }
 }
 
+// Split the interval into two new intervals based on the rule.
+fn split_interval(range: &PartRange, rule: &Rule) -> (PartRange, PartRange) {
+    match (rule.category, rule.comparator, rule.value) {
+        // Cases for 's' category
+        (Some('s'), Some('<'), Some(value)) => (
+            PartRange {
+                label: rule.target.clone(),
+                s: (range.s.0, value - 1),
+                ..range.clone()
+            },
+            PartRange {
+                s: (value, range.s.1),
+                ..range.clone()
+            },
+        ),
+        (Some('s'), Some('>'), Some(value)) => (
+            PartRange {
+                label: rule.target.clone(),
+                s: (value + 1, range.s.1),
+                ..range.clone()
+            },
+            PartRange {
+                s: (range.s.0, value),
+                ..range.clone()
+            },
+        ),
+        // Cases for 'a' category
+        (Some('a'), Some('<'), Some(value)) => (
+            PartRange {
+                label: rule.target.clone(),
+                a: (range.a.0, value - 1),
+                ..range.clone()
+            },
+            PartRange {
+                a: (value, range.a.1),
+                ..range.clone()
+            },
+        ),
+        (Some('a'), Some('>'), Some(value)) => (
+            PartRange {
+                label: rule.target.clone(),
+                a: (value + 1, range.a.1),
+                ..range.clone()
+            },
+            PartRange {
+                a: (range.a.0, value),
+                ..range.clone()
+            },
+        ),
+        // Cases for 'm' category
+        (Some('m'), Some('<'), Some(value)) => (
+            PartRange {
+                label: rule.target.clone(),
+                m: (range.m.0, value - 1),
+                ..range.clone()
+            },
+            PartRange {
+                m: (value, range.m.1),
+                ..range.clone()
+            },
+        ),
+        (Some('m'), Some('>'), Some(value)) => (
+            PartRange {
+                label: rule.target.clone(),
+                m: (value + 1, range.m.1),
+                ..range.clone()
+            },
+            PartRange {
+                m: (range.m.0, value),
+                ..range.clone()
+            },
+        ),
+        // Cases for 'x' category
+        (Some('x'), Some('<'), Some(value)) => (
+            PartRange {
+                label: rule.target.clone(),
+                x: (range.x.0, value - 1),
+                ..range.clone()
+            },
+            PartRange {
+                x: (value, range.x.1),
+                ..range.clone()
+            },
+        ),
+        (Some('x'), Some('>'), Some(value)) => (
+            PartRange {
+                label: rule.target.clone(),
+                x: (value + 1, range.x.1),
+                ..range.clone()
+            },
+            PartRange {
+                x: (range.x.0, value),
+                ..range.clone()
+            },
+        ),
+        _ => unreachable!("This should never happen!"),
+    }
+}
+
 // This function will work on processing all the workflows, in their correct rule order and splitting up and creating new intervals as needed.
 pub fn rangeflow(workflows: &HashMap<String, Workflow>) -> i128 {
     // Start off with a single interval, for all the parts.
@@ -112,33 +211,56 @@ pub fn rangeflow(workflows: &HashMap<String, Workflow>) -> i128 {
     });
 
     // Keep going until the queue is fully empty.
-    while !queue.is_empty() {
+    while let Some(interval) = queue.pop_front() {
         // Pop the first item off the queue and start processing it.
-        let mut interval = queue.pop_front().unwrap();
-        let label = interval.label;
-        // Get the rules of the current interval via the label.
-        let rules = &workflows[&label].rules;
+        let label = &interval.label;
 
-        // Iterate thru the rules:
+        // First we need to check if the interval has a label that is just an "A" or an "R", if it does then we need to either discard it or add it to the accepted list.
+        if label == "A" || label == "R" {
+            // If the label is "A" then we need to add it to the accepted list.
+            if label == "A" {
+                accepted.push(interval.clone());
+            }
+            // If the label is "R" then we need to discard it, in either case we can continue to the next interval in the queue.
+            continue;
+        }
+
+        // Get the rules of the current interval via the label.
+        let rules = &workflows[label].rules;
+
+        // Iterate thru the rules, we will actually need to process each rule and split the interval up as needed.
         for rule in rules {
             // Check if the rule has a category, if it does not then it's simply a jump to another workflow and we will merely relabel the interval and push it back into the queue.
             // Unless the label is "A" or "R" in which case we will need to either discard the interval or add it to a list of accepted intervals.
-            if rule.category.is_some() {
-                todo!("Come back to this later..");
+            if let Some(_) = rule.category {
+                // Based off the category, and the comparator we need to split up the current interval into new intervals and push them back into the queue.
+                // Next we need to use the comparator to determine which side of the interval we need to split on.
+                let (left, right) = split_interval(&interval, &rule);
+
+                // Push the left and right intervals back into the queue.
+                queue.push_back(left);
+                queue.push_back(right);
             } else {
-                // Check what the target is, if it's "A" or "R" then we will need to either discard the interval or add it to a list of accepted intervals.
-                match label.as_ref() {
-                    "A" => accepted.push(interval),
-                    "R" => (),
-                    _ => {
-                        // If the target is not "A" or "R" then we will need to relabel the interval and push it back into the queue.
-                        interval.label = rule.target.to_string();
-                        queue.push_back(interval);
+                // If the rule has no category, then we simply need to relabel the interval and push it back into the queue.
+                queue.push_back(
+                    PartRange {
+                        label: rule.target.to_string(),
+                        x: interval.x,
+                        m: interval.m,
+                        a: interval.a,
+                        s: interval.s,
                     }
-                }
+                    .clone(),
+                );
             }
+
+            // Print queue size for debugging.
+            println!("Queue Size: {}", queue.len());
         }
     }
+
+    // Print the accepted intervals.
+    println!("Accepted Intervals: {:?}", accepted);
 
     0
 }
@@ -217,22 +339,22 @@ pub fn flow(workflows: &HashMap<String, Workflow>, part: &Part) -> bool {
 pub fn solve(data: &(HashMap<String, Workflow>, Vec<Part>)) -> (i128, i128) {
     let (workflows, parts) = data;
 
-    let p1: i128 = parts
-        .par_iter()
-        .map(|p| {
-            if flow(&workflows, &p) {
-                p.x + p.m + p.a + p.s
-            } else {
-                0
-            }
-        })
-        .sum();
+    // let p1: i128 = parts
+    //     .par_iter()
+    //     .map(|p| {
+    //         if flow(&workflows, &p) {
+    //             p.x + p.m + p.a + p.s
+    //         } else {
+    //             0
+    //         }
+    //     })
+    //     .sum();
 
     let p2: i128 = 0;
 
     rangeflow(&workflows);
 
-    (p1, p2)
+    (0, 0)
 }
 
 pub fn parse(data: &[String]) -> (HashMap<String, Workflow>, Vec<Part>) {
