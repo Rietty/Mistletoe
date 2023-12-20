@@ -152,10 +152,10 @@ pub fn rangeflow(
 
         if right.1 >= right.0 {
             match rule.category.unwrap() {
-                'x' => intervals.x = left,
-                'm' => intervals.m = left,
-                'a' => intervals.a = left,
-                's' => intervals.s = left,
+                'x' => intervals.x = right,
+                'm' => intervals.m = right,
+                'a' => intervals.a = right,
+                's' => intervals.s = right,
                 _ => unreachable!(),
             };
         } else {
